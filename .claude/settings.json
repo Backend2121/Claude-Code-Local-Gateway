@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/alexi/Documents//**)",
+      "Read(//c/Users/alexi/Documents/**)",
+      "Read(//c/Users/alexi/**)",
+      "Read(//temp/readonly/**)"
+    ]
+  }
+}
