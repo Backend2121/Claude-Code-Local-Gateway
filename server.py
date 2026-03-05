@@ -19,6 +19,7 @@ Configuration (via .env or environment variables):
 
 import argparse
 import hmac
+import json
 import os
 import platform
 import shlex
@@ -148,6 +149,65 @@ def execute():
         "exitCode":   result.returncode,
         "durationMs": duration_ms,
     }), 200
+
+@app.route("/generate-claude", methods=["POST"])
+def generate_claude():
+    if not _check_auth():
+        return _error(401, "unauthorized", "Invalid or missing API key")
+
+    if not request.is_json:
+        return _error(400, "invalid_request", "Content-Type must be application/json")
+
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data.get("user_prompt"), str) or not data["user_prompt"].strip():
+        return _error(400, "invalid_request", "Field 'user_prompt' is required and must be a non-empty string")
+
+    user_prompt   = data["user_prompt"]
+    system_prompt = data.get("system_prompt", "")
+    model         = data.get("model", "claude-haiku-4-5-20251001")
+
+    claude_bin = shutil.which("claude") or "claude"
+    cmd = [claude_bin, "-p", user_prompt, "--system-prompt", system_prompt,
+           "--model", model, "--output-format", "json"]
+
+    print(f"[generate-claude] model={model} prompt_len={len(user_prompt)}")
+    start = time.monotonic()
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            timeout=COMMAND_TIMEOUT,
+            text=True,
+        )
+    except subprocess.TimeoutExpired:
+        return _error(408, "timeout", f"Claude timed out after {COMMAND_TIMEOUT} seconds")
+    except Exception as exc:
+        app.logger.error("generate-claude subprocess failed: %s", exc)
+        return _error(500, "internal_error", f"Failed to launch Claude: {exc}")
+
+    duration_ms = int((time.monotonic() - start) * 1000)
+    print(f"[generate-claude] exit={result.returncode} duration={duration_ms}ms")
+
+    if result.returncode != 0:
+        stderr_snippet = (result.stderr or "")[:500]
+        return jsonify({"success": False, "error": f"Claude exited {result.returncode}: {stderr_snippet}"}), 200
+
+    try:
+        parsed = json.loads(result.stdout)
+    except Exception:
+        return _error(500, "internal_error", f"Failed to parse Claude JSON output: {result.stdout[:200]}")
+
+    if parsed.get("is_error") or not parsed.get("result"):
+        return jsonify({"success": False, "error": "Claude returned an error or empty result"}), 200
+
+    return jsonify({
+        "success":     True,
+        "result":      parsed["result"],
+        "cost_usd":    parsed.get("cost_usd", 0),
+        "duration_ms": duration_ms,
+    }), 200
+
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
