@@ -6,6 +6,14 @@ This guide walks you through setting up CCLG on a Raspberry Pi 4 or 5 from scrat
 
 ---
 
+## Recommended: Docker (skip Steps 2, 3, and 4)
+
+> **Docker is the preferred way to run CCLG on a Raspberry Pi.** The image bundles Python, Node.js, and the Claude CLI — you don't install any of them manually.
+>
+> If you have Docker (or plan to install it in Step 6), skip Steps 2, 3, and 4. Just clone the repo, configure `.env`, mount your `~/.claude` credentials, and run `docker compose up`.
+
+---
+
 ## What You Need Before Starting
 
 - A **Claude PRO or MAX subscription** (a free account will not work)
@@ -13,6 +21,8 @@ This guide walks you through setting up CCLG on a Raspberry Pi 4 or 5 from scrat
 - **64-bit Raspberry Pi OS** (Bookworm or Bullseye) — the 32-bit image will not work
 - An internet connection (Ethernet or Wi-Fi)
 - SSH access or a keyboard/monitor connected to the Pi
+
+> **Using Docker?** You only need Docker installed — skip Steps 2, 3, and 4.
 
 ---
 
@@ -38,6 +48,8 @@ sudo apt update && sudo apt upgrade -y
 
 ## Step 2 — Install Python
 
+> **Docker users: skip this step.**
+
 Python 3 is pre-installed on Raspberry Pi OS. Verify the version:
 
 ```bash
@@ -61,6 +73,8 @@ pip3 --version
 
 ## Step 3 — Install Node.js
 
+> **Docker users: skip this step.**
+
 The version of Node.js in the default Raspberry Pi OS repos is outdated. Install the current LTS via NodeSource:
 
 ```bash
@@ -80,6 +94,8 @@ Both should print a version number (e.g. `v20.x.x`). If `node --version` still s
 ---
 
 ## Step 4 — Install Claude Code CLI
+
+> **Docker users: skip this step.**
 
 ```bash
 sudo npm install -g @anthropic-ai/claude-code
@@ -119,9 +135,9 @@ Then run `claude` inside that SSH session. When it prints a `localhost` URL for 
 
 ---
 
-## Step 6 — Install Docker (optional)
+## Step 6 — Install Docker (recommended)
 
-Skip this step if you plan to run the server directly with Python.
+Skip this step only if you plan to run the server directly with Python. **Docker is the recommended way to run CCLG** — it handles Python, Node.js, and the Claude CLI automatically inside the container.
 
 ```bash
 curl -fsSL https://get.docker.com | sudo sh
@@ -211,7 +227,15 @@ Save and exit: `Ctrl+O`, `Enter`, `Ctrl+X`.
 
 ## Step 10 — Run the Server
 
-**Option A — Python directly:**
+**Option A — Docker (recommended):**
+
+```bash
+docker compose up
+```
+
+The image will build on first run (this takes a few minutes on the Pi). Subsequent starts are instant.
+
+**Option B — Python directly:**
 
 ```bash
 python3 server.py
@@ -221,12 +245,6 @@ You should see:
 
 ```
  * Running on http://127.0.0.1:8642
-```
-
-**Option B — Docker:**
-
-```bash
-docker compose up
 ```
 
 ---

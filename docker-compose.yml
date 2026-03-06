@@ -10,4 +10,5 @@ services:
       - ./logs:/app/logs
       # Mount host Claude credentials so the CLI is authenticated
       - ~/.claude:/root/.claude:ro
+      - ~/.claude.json:/root/.claude.json:ro
     restart: unless-stopped

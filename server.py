@@ -209,8 +209,10 @@ def generate_claude():
     model         = data.get("model", "claude-haiku-4-5-20251001")
 
     claude_bin = shutil.which("claude") or "claude"
-    cmd = [claude_bin, "-p", user_prompt, "--system-prompt", system_prompt,
-           "--model", model, "--output-format", "json"]
+    cmd = [claude_bin, "-p", user_prompt, "--model", model,
+           "--output-format", "json", "--dangerously-skip-permissions"]
+    if system_prompt:
+        cmd += ["--system-prompt", system_prompt]
 
     print(f"[generate-claude] model={model} prompt_len={len(user_prompt)}")
     start = time.monotonic()

@@ -4,6 +4,14 @@ This guide walks you through setting up CCLG on Linux from scratch. Commands are
 
 ---
 
+## Recommended: Docker (skip Steps 1–3)
+
+> **If you have Docker installed, skip straight to [Step 4 — Log In to Claude Code](#step-4--log-in-to-claude-code), then [Step 5 — Install Docker](#step-5--install-docker) (already done), then jump to [Step 6](#step-6--download-this-project).**
+>
+> Docker bundles Python, Node.js, and the Claude CLI inside the image — you don't need to install any of them manually. Just clone the repo, configure `.env`, and run `docker compose up`.
+
+---
+
 ## What You Need Before Starting
 
 - A **Claude PRO or MAX subscription** (a free account will not work)
@@ -11,9 +19,13 @@ This guide walks you through setting up CCLG on Linux from scratch. Commands are
 - A terminal
 - An internet connection
 
+> **Using Docker?** You only need Docker installed — skip Steps 1, 2, and 3.
+
 ---
 
 ## Step 1 — Install Python
+
+> **Docker users: skip this step.**
 
 Python 3.10+ is required. Most modern distros include it, but verify first:
 
@@ -39,6 +51,8 @@ pip3 --version
 
 ## Step 2 — Install Node.js
 
+> **Docker users: skip this step.**
+
 Claude Code is distributed as a Node.js package. The recommended way is via NodeSource, which gives you the latest LTS version:
 
 ```bash
@@ -58,6 +72,8 @@ Both should print a version number (e.g. `v20.x.x`).
 ---
 
 ## Step 3 — Install Claude Code CLI
+
+> **Docker users: skip this step.**
 
 ```bash
 sudo npm install -g @anthropic-ai/claude-code
@@ -109,9 +125,9 @@ Then run `claude` inside that SSH session. When it prints a `localhost` URL for 
 
 ---
 
-## Step 5 — Install Docker (optional)
+## Step 5 — Install Docker (recommended)
 
-Skip this step if you plan to run the server directly with Python. Docker is only needed for the Docker deployment option.
+Skip this step only if you plan to run the server directly with Python. **Docker is the recommended way to run CCLG** — it handles Python, Node.js, and the Claude CLI automatically inside the container.
 
 ```bash
 sudo apt update
@@ -219,7 +235,15 @@ Save and exit: `Ctrl+O`, `Enter`, `Ctrl+X`.
 
 ## Step 9 — Run the Server
 
-**Option A — Python directly:**
+**Option A — Docker (recommended):**
+
+```bash
+docker compose up
+```
+
+The image will build on first run (this takes a few minutes). Subsequent starts are instant.
+
+**Option B — Python directly:**
 
 ```bash
 python3 server.py
@@ -232,12 +256,6 @@ You should see:
 ```
 
 Leave the terminal open — closing it stops the server.
-
-**Option B — Docker:**
-
-```bash
-docker compose up
-```
 
 ---
 
