@@ -1,6 +1,6 @@
 # Claude Gateway
 
-A lightweight, self-hosted HTTP server that gives you remote access to **Claude AI** and (optionally) a shell over a simple REST API — with a built-in web UI.
+A lightweight, self-hosted HTTP server that gives you remote access to a **Local instance if Claude Code (PRO/MAX)** and (optionally) a shell over a simple REST API — with a built-in web UI.
 
 ```
 Browser / HTTP client
@@ -8,7 +8,7 @@ Browser / HTTP client
         v
   Flask Server (this repo)
         |
-        +-- /generate-claude --> claude CLI --> Anthropic API
+        +-- /generate-claude --> claude code CLI --> Anthropic API
         +-- /execute         --> local shell  (optional, see security)
 ```
 
@@ -33,8 +33,8 @@ Browser / HTTP client
 ### Option A — Docker (recommended for new users)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-gateway
-cd claude-gateway
+git clone https://github.com/Backend2121/Claude-Code-API
+cd Claude-Code-API
 
 cp .env.example .env
 # Edit .env: set API_KEY to a strong random value
@@ -48,8 +48,8 @@ Open `http://localhost:8642` in your browser.
 ### Option B — Python (local / development)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-gateway
-cd claude-gateway
+git clone https://github.com/Backend2121/Claude-Code-API
+cd Claude-Code-API
 
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
@@ -109,7 +109,7 @@ Rate limit: 10 requests/minute per IP.
 {
   "success": true,
   "result": "Recursion is a function calling itself...",
-  "cost_usd": 0.0002,
+  "cost_usd": 0.0002, // Using a PRO/MAX account this is always 0!
   "duration_ms": 1240
 }
 ```
@@ -134,12 +134,12 @@ Disabled when `RESTRICTED_MODE=true`. Rate limit: 30 requests/minute per IP.
 
 ## Deployment behind a reverse proxy (HTTPS)
 
-Never expose the server directly on port 80/443. Use Caddy or nginx for TLS termination.
+Never expose the server directly on port 80/443. Use Caddy, nginx, or Apache2 for TLS termination.
 
 **Caddyfile:**
 ```
 yourdomain.com {
-    reverse_proxy localhost:8642
+    reverse_proxy <host_machine>:8642
 }
 ```
 
@@ -155,6 +155,31 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
     }
 }
+```
+
+**Apache2 snippet:**
+
+Enable the required modules first:
+```bash
+sudo a2enmod proxy proxy_http headers ssl
+sudo systemctl reload apache2
+```
+
+```apache
+<VirtualHost *:443>
+    ServerName yourdomain.com
+
+    SSLEngine on
+    SSLCertificateFile    /etc/letsencrypt/live/yourdomain.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/yourdomain.com/privkey.pem
+
+    ProxyPreserveHost On
+    ProxyPass        / http://127.0.0.1:8642/
+    ProxyPassReverse / http://127.0.0.1:8642/
+
+    # Forward the real client IP so rate limiting works correctly
+    RequestHeader set X-Real-IP %{REMOTE_ADDR}s
+</VirtualHost>
 ```
 
 Set `HOST=127.0.0.1` in `.env` so the server only accepts connections from the proxy.
