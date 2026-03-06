@@ -143,17 +143,17 @@ docker compose version
 ## Step 7 — Download This Project
 
 **Option A — Release download (recommended):**
-1. Go to the [Releases page](https://github.com/YOUR_USERNAME/CCLG/releases) on GitHub.
+1. Go to the [Releases page](https://github.com/Backend2121/CCLG/releases) on GitHub.
 2. Under the latest release, copy the link to the `.zip` or `.tar.gz` file and download it:
 ```bash
-wget https://github.com/YOUR_USERNAME/CCLG/releases/download/vX.X.X/CCLG.zip
+wget https://github.com/Backend2121/CCLG/releases/download/vX.X.X/CCLG.zip
 unzip CCLG.zip
 cd CCLG
 ```
 
 **Option B — Using Git:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/CCLG.git
+git clone https://github.com/Backend2121/CCLG.git
 cd CCLG
 ```
 

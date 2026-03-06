@@ -62,7 +62,7 @@ Follow the prompts to log in via your browser. Once authenticated, you can close
 If you haven't already, download this project to your PC.
 
 **Option A — Release download (recommended):**
-1. Go to the [Releases page](https://github.com/YOUR_USERNAME/CCLG/releases) on GitHub.
+1. Go to the [Releases page](https://github.com/Backend2121/CCLG/releases) on GitHub.
 2. Under the latest release, download the `.zip` file.
 3. Extract it somewhere easy to find (e.g. `C:\Users\YourName\CCLG`).
 4. Open Command Prompt and navigate to the folder:
@@ -72,7 +72,7 @@ cd C:\Users\YourName\CCLG
 
 **Option B — Using Git** (if you have Git installed):
 ```
-git clone https://github.com/YOUR_USERNAME/CCLG.git
+git clone https://github.com/Backend2121/CCLG.git
 cd CCLG
 ```
 
