@@ -1,0 +1,11 @@
+services:
+  gateway:
+    build: .
+    ports:
+      - "8642:8642"
+    env_file:
+      - .env
+    volumes:
+      # Persist the audit log outside the container
+      - ./logs:/app/logs
+    restart: unless-stopped

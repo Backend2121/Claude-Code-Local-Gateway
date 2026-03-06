@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Gateway</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2e2e2e;
+      --accent: #d97706;
+      --accent-dim: #92400e;
+      --text: #e5e5e5;
+      --muted: #737373;
+      --green: #22c55e;
+      --red: #ef4444;
+      --mono: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+    header h1 { font-size: 1rem; font-weight: 600; letter-spacing: .5px; color: var(--accent); }
+    #status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-left: auto; flex-shrink: 0; }
+    #status-dot.ok { background: var(--green); }
+    #status-dot.err { background: var(--red); }
+    #status-label { font-size: .75rem; color: var(--muted); }
+
+    .key-row { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; align-items: center; gap: 10px; }
+    .key-row label { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+    .key-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-family: var(--mono); font-size: .8rem; outline: none; }
+    .key-row input:focus { border-color: var(--accent); }
+    .key-row button { background: var(--accent-dim); border: none; border-radius: 6px; padding: 6px 14px; color: var(--text); font-size: .8rem; cursor: pointer; }
+    .key-row button:hover { background: var(--accent); }
+
+    nav { display: flex; gap: 2px; padding: 12px 24px 0; }
+    nav button { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 18px; color: var(--muted); font-size: .9rem; cursor: pointer; transition: color .15s; }
+    nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+    nav button:hover:not(.active) { color: var(--text); }
+
+    main { flex: 1; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; max-width: 900px; width: 100%; margin: 0 auto; }
+
+    .tab { display: none; flex-direction: column; gap: 14px; }
+    .tab.active { display: flex; }
+
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+    .input-group input, .input-group textarea, .input-group select {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: .88rem; outline: none; resize: vertical;
+    }
+    .input-group input:focus, .input-group textarea:focus, .input-group select:focus { border-color: var(--accent); }
+    .input-group select option { background: var(--surface); }
+
+    .row { display: flex; gap: 10px; align-items: flex-end; }
+    .row .input-group { flex: 1; }
+
+    .btn { background: var(--accent); border: none; border-radius: 8px; padding: 10px 22px; color: #000; font-weight: 600; font-size: .88rem; cursor: pointer; white-space: nowrap; }
+    .btn:hover { opacity: .85; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .terminal {
+      background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; font-family: var(--mono); font-size: .82rem; line-height: 1.6;
+      min-height: 200px; max-height: 420px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+      color: var(--green);
+    }
+    .terminal .meta { color: var(--muted); }
+    .terminal .err  { color: var(--red); }
+    .terminal .info { color: var(--accent); }
+
+    .claude-out {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px; font-size: .9rem; line-height: 1.7; min-height: 120px; color: var(--text);
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .claude-out .meta { font-size: .75rem; color: var(--muted); margin-top: 12px; }
+
+    .disclaimer {
+      background: #1c1008; border: 1px solid #78350f; border-radius: 8px;
+      padding: 12px 16px; font-size: .8rem; color: #fbbf24; line-height: 1.6;
+    }
+    .disclaimer strong { display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Claude Gateway</h1>
+  <span id="status-label">checking...</span>
+  <span id="status-dot"></span>
+</header>
+
+<div class="key-row">
+  <label>API Key</label>
+  <input type="password" id="api-key" placeholder="Paste your X-API-Key here" autocomplete="off">
+  <button onclick="saveKey()">Save</button>
+</div>
+
+<nav>
+  <button class="active" onclick="switchTab('shell')">Shell</button>
+  <button onclick="switchTab('claude')">Ask Claude</button>
+</nav>
+
+<main>
+
+  <div id="tab-shell" class="tab active">
+    <div class="disclaimer" id="shell-warning" style="display:none">
+      <strong>Shell execution is enabled.</strong>
+      Every command runs directly on the host machine. Ensure your API key is set and this server is not publicly accessible without a firewall or TLS proxy.
+    </div>
+    <div class="row">
+      <div class="input-group" style="flex:1">
+        <label>Command</label>
+        <input type="text" id="cmd-input" placeholder="e.g. claude --version" onkeydown="if(event.key==='Enter') runCmd()">
+      </div>
+      <button class="btn" id="run-btn" onclick="runCmd()">Run</button>
+    </div>
+    <div class="terminal" id="terminal"><span class="meta">Output will appear here...</span></div>
+  </div>
+
+  <div id="tab-claude" class="tab">
+    <div class="input-group">
+      <label>Prompt</label>
+      <textarea id="claude-prompt" rows="4" placeholder="What do you want to ask Claude?"></textarea>
+    </div>
+    <div class="input-group">
+      <label>System Prompt (optional)</label>
+      <textarea id="claude-system" rows="2" placeholder="Optional system context..."></textarea>
+    </div>
+    <div class="row">
+      <div class="input-group">
+        <label>Model</label>
+        <select id="claude-model">
+          <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (fast, cheap)</option>
+          <option value="claude-sonnet-4-6">claude-sonnet-4-6 (balanced)</option>
+          <option value="claude-opus-4-6">claude-opus-4-6 (most capable)</option>
+        </select>
+      </div>
+      <button class="btn" id="claude-btn" onclick="askClaude()">Ask</button>
+    </div>
+    <div class="claude-out" id="claude-out"><span style="color:var(--muted)">Response will appear here...</span></div>
+  </div>
+
+</main>
+
+<script>
+  const API_KEY_LS = 'cg_api_key';
+  let restrictedMode = false;
+
+  // ── Persist API key ────────────────────────────────────────────────────────
+  const keyInput = document.getElementById('api-key');
+  keyInput.value = localStorage.getItem(API_KEY_LS) || '';
+
+  function saveKey() {
+    localStorage.setItem(API_KEY_LS, keyInput.value.trim());
+    keyInput.style.borderColor = 'var(--green)';
+    setTimeout(() => keyInput.style.borderColor = '', 1000);
+  }
+
+  function getKey() { return keyInput.value.trim() || localStorage.getItem(API_KEY_LS) || ''; }
+
+  function authHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    const k = getKey();
+    if (k) h['X-API-Key'] = k;
+    return h;
+  }
+
+  // ── Health polling ─────────────────────────────────────────────────────────
+  const dot   = document.getElementById('status-dot');
+  const label = document.getElementById('status-label');
+
+  async function checkHealth() {
+    try {
+      const r = await fetch('/health');
+      const d = await r.json();
+      dot.className = 'ok';
+      label.textContent = `${d.shell} · ${d.restricted_mode ? 'restricted' : 'unrestricted'}`;
+      restrictedMode = d.restricted_mode;
+      document.getElementById('shell-warning').style.display = restrictedMode ? 'none' : 'block';
+    } catch {
+      dot.className = 'err';
+      label.textContent = 'offline';
+    }
+  }
+
+  checkHealth();
+  setInterval(checkHealth, 30000);
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // ── Shell tab ──────────────────────────────────────────────────────────────
+  const terminal = document.getElementById('terminal');
+
+  function appendTerminal(text, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    terminal.appendChild(span);
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+
+  async function runCmd() {
+    const cmd = document.getElementById('cmd-input').value.trim();
+    if (!cmd) return;
+    if (restrictedMode) {
+      terminal.innerHTML = '';
+      appendTerminal('Shell execution is disabled (RESTRICTED_MODE=true).\nUse the "Ask Claude" tab instead.\n', 'err');
+      return;
+    }
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    terminal.innerHTML = '';
+    appendTerminal(`$ ${cmd}\n`, 'info');
+    try {
+      const r = await fetch('/execute', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ command: cmd }) });
+      const d = await r.json();
+      if (d.stdout) appendTerminal(d.stdout);
+      if (d.stderr) appendTerminal(d.stderr, 'err');
+      appendTerminal(`\n[exit ${d.exitCode} · ${d.durationMs}ms]\n`, 'meta');
+    } catch (e) {
+      appendTerminal(`\nRequest failed: ${e.message}\n`, 'err');
+    } finally {
+      btn.disabled = false;
+      document.getElementById('cmd-input').focus();
+    }
+  }
+
+  // ── Claude tab ─────────────────────────────────────────────────────────────
+  async function askClaude() {
+    const prompt = document.getElementById('claude-prompt').value.trim();
+    if (!prompt) return;
+    const btn = document.getElementById('claude-btn');
+    const out  = document.getElementById('claude-out');
+    btn.disabled = true;
+    out.innerHTML = '<span style="color:var(--muted)">Thinking...</span>';
+    try {
+      const r = await fetch('/generate-claude', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          user_prompt:   prompt,
+          system_prompt: document.getElementById('claude-system').value.trim(),
+          model:         document.getElementById('claude-model').value,
+        })
+      });
+      const d = await r.json();
+      if (d.success) {
+        out.textContent = d.result;
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = `cost: $${(d.cost_usd || 0).toFixed(4)} · ${d.duration_ms}ms`;
+        out.appendChild(meta);
+      } else {
+        out.innerHTML = `<span style="color:var(--red)">${d.error || d.message || 'Unknown error'}</span>`;
+      }
+    } catch (e) {
+      out.innerHTML = `<span style="color:var(--red)">Request failed: ${e.message}</span>`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

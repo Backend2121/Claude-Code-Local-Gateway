@@ -10,25 +10,38 @@ Usage:
 Configuration (via .env or environment variables):
     PORT=8080
     HOST=127.0.0.1
-    API_KEY=                 (leave blank to disable auth)
+    API_KEY=                 (leave blank to disable auth — NOT recommended)
     FORCE_SHELL=             (e.g. "powershell", "bash", "cmd")
+    RESTRICTED_MODE=true     (disables /execute; only /generate-claude works)
     COMMAND_TIMEOUT=30
     MAX_OUTPUT_BYTES=1048576
     MAX_COMMAND_LENGTH=2048
+    LOG_FILE=claude_server.log
 """
 
 import argparse
 import hmac
 import json
+import logging
+import logging.handlers
 import os
 import platform
 import shlex
 import shutil
 import subprocess
+import sys
 import time
 
+# Force UTF-8 on Windows terminals so emoji in Claude responses don't mojibake
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 load_dotenv()
 
@@ -41,6 +54,18 @@ MAX_COMMAND_LEN  = int(os.getenv("MAX_COMMAND_LENGTH", "2048"))
 HOST             = os.getenv("HOST", "127.0.0.1")
 PORT             = int(os.getenv("PORT", "8080"))
 FORCE_SHELL      = os.getenv("FORCE_SHELL", "").strip() or None
+RESTRICTED_MODE  = os.getenv("RESTRICTED_MODE", "false").lower() == "true"
+LOG_FILE         = os.getenv("LOG_FILE", "claude_server.log")
+
+# ── Audit logger ──────────────────────────────────────────────────────────────
+
+_audit = logging.getLogger("audit")
+_audit.setLevel(logging.INFO)
+_audit_handler = logging.handlers.RotatingFileHandler(
+    LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+)
+_audit_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+_audit.addHandler(_audit_handler)
 
 # ── Shell detection ───────────────────────────────────────────────────────────
 
@@ -94,16 +119,30 @@ def _error(status: int, error: str, message: str):
 # ── Flask app ─────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
 
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "shell": SHELL_CMD[0]}), 200
+    return jsonify({
+        "status": "ok",
+        "shell": SHELL_CMD[0],
+        "restricted_mode": RESTRICTED_MODE,
+        "auth_enabled": bool(API_KEY),
+    }), 200
 
 
 @app.route("/execute", methods=["POST"])
+@limiter.limit("30 per minute")
 def execute():
-    
+    if RESTRICTED_MODE:
+        return _error(403, "disabled", "Shell execution is disabled in restricted mode. Use /generate-claude instead.")
+
     if not _check_auth():
         return _error(401, "unauthorized", "Invalid or missing API key")
 
@@ -118,9 +157,8 @@ def execute():
 
     if len(command) > MAX_COMMAND_LEN:
         return _error(400, "invalid_request", f"Command exceeds maximum length of {MAX_COMMAND_LEN} characters")
-    print(command)
+
     full_cmd = _build_shell_argv(SHELL_CMD, command)
-    print(f"Running: {full_cmd}")
     start = time.monotonic()
     try:
         result = subprocess.run(
@@ -131,6 +169,7 @@ def execute():
             text=False,  # raw bytes — safe for non-UTF-8 output
         )
     except subprocess.TimeoutExpired:
+        _audit.info("EXECUTE ip=%s exit=timeout cmd=%r", request.remote_addr, command[:200])
         return _error(408, "timeout", f"Command timed out after {COMMAND_TIMEOUT} seconds")
     except Exception as exc:
         app.logger.error("Subprocess launch failed: %s", exc)
@@ -139,8 +178,9 @@ def execute():
     duration_ms = int((time.monotonic() - start) * 1000)
     stdout = _truncate(result.stdout.decode("utf-8", errors="replace"), MAX_OUTPUT_BYTES)
     stderr = _truncate(result.stderr.decode("utf-8", errors="replace"), MAX_OUTPUT_BYTES)
-    print(stdout)
-    print(stderr)
+
+    _audit.info("EXECUTE ip=%s exit=%d duration=%dms cmd=%r",
+                request.remote_addr, result.returncode, duration_ms, command[:200])
 
     return jsonify({
         "success":    result.returncode == 0,
@@ -151,6 +191,7 @@ def execute():
     }), 200
 
 @app.route("/generate-claude", methods=["POST"])
+@limiter.limit("10 per minute")
 def generate_claude():
     if not _check_auth():
         return _error(401, "unauthorized", "Invalid or missing API key")
@@ -179,6 +220,8 @@ def generate_claude():
             stdin=subprocess.DEVNULL,
             timeout=COMMAND_TIMEOUT,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
     except subprocess.TimeoutExpired:
         return _error(408, "timeout", f"Claude timed out after {COMMAND_TIMEOUT} seconds")
@@ -222,11 +265,29 @@ def main():
         global SHELL_CMD
         SHELL_CMD = [args.shell, "-c"]
 
-    auth_status = "API key auth ENABLED" if API_KEY else "Auth DISABLED (local mode)"
-    print(f"Starting server on http://{args.host}:{args.port}")
-    print(f"Shell:  {' '.join(SHELL_CMD)}")
-    print(f"Auth:   {auth_status}")
-    print(f"Limits: timeout={COMMAND_TIMEOUT}s  max_output={MAX_OUTPUT_BYTES}B  max_cmd={MAX_COMMAND_LEN}chars")
+    if not RESTRICTED_MODE:
+        print("\n" + "=" * 62)
+        print("  WARNING: SHELL EXECUTION IS ENABLED")
+        print("  /execute exposes a full shell over the network.")
+        print("  - NEVER run without API_KEY set.")
+        print("  - NEVER expose this port to the internet without a firewall.")
+        print("  - Set RESTRICTED_MODE=true for safer public deployments.")
+        print("  See SECURITY_WARNING.md for full guidance.")
+        print("=" * 62)
+
+    mode_label   = "RESTRICTED (shell disabled)" if RESTRICTED_MODE else "UNRESTRICTED (shell enabled)"
+    auth_label   = "ENABLED" if API_KEY else "DISABLED — set API_KEY before exposing to network!"
+    print(f"""
+Claude Gateway Server
+  Listening:  http://{args.host}:{args.port}
+  Web UI:     http://localhost:{args.port}/
+  Auth:       {auth_label}
+  Shell:      {' '.join(SHELL_CMD)}
+  Mode:       {mode_label}
+  Audit log:  {LOG_FILE}
+
+Press Ctrl+C to stop.
+""")
 
     app.run(host=args.host, port=args.port, debug=False)
 
