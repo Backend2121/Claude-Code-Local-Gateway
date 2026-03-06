@@ -1,4 +1,4 @@
 /.env
 /output.json
 /script.md
-*.log
+/claude_server.log
