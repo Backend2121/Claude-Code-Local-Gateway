@@ -1,4 +1,18 @@
-/.env
-/output.json
-/script.md
-/claude_server.log
+# Secrets & local config
+.env
+
+# Runtime output
+*.log
+output.json
+script.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Claude Code local settings
+.claude/
