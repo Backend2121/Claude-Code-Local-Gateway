@@ -111,27 +111,15 @@ claude --version
 
 ## Step 5 — Log In to Claude Code
 
-The Raspberry Pi is typically headless (no browser). Use one of these approaches:
-
-**Option A — Copy credentials from a machine where you're already logged in (recommended)**
-
-On your local machine (where `claude` is already authenticated), run:
-
 ```bash
-scp -r ~/.claude/ pi@raspberry-pi-ip:~/.claude/
+claude
 ```
 
-Replace `pi` with your Pi's username and `raspberry-pi-ip` with its IP address (find it with `hostname -I` on the Pi). Claude Code stores its auth tokens in `~/.claude/` — copying this folder is enough.
+Follow the prompts to log in via your browser. Once authenticated, exit the interactive session:
 
-**Option B — SSH port forwarding**
-
-Connect to the Pi with a port forward before running `claude`:
-
-```bash
-ssh -L 9876:localhost:9876 pi@raspberry-pi-ip
 ```
-
-Then run `claude` inside that SSH session. When it prints a `localhost` URL for the OAuth flow, open it in your **local** browser — the tunnel makes it reachable. Complete the login, then run `/exit`.
+/exit
+```
 
 ---
 
@@ -228,6 +216,8 @@ Save and exit: `Ctrl+O`, `Enter`, `Ctrl+X`.
 ## Step 10 — Run the Server
 
 **Option A — Docker (recommended):**
+
+First, make sure you are logged in to Claude Code (run `claude` and follow the login steps if you haven't already). Then:
 
 ```bash
 docker compose up
@@ -362,7 +352,7 @@ Do not use `sudo pip3`. Instead: `pip3 install --user -r requirements.txt`.
 Make sure `HOST=0.0.0.0` is set in `.env` and the server has been restarted after the change. Also check the Pi's firewall: `sudo ufw status`.
 
 **Claude returns an error about authentication**
-Re-copy `~/.claude/` from your local machine (Option A in Step 5) or re-run the SSH tunnel login.
+Run `claude` in the terminal and follow the login steps again (Step 5).
 
 ---
 

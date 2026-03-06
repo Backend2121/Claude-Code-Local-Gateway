@@ -99,29 +99,6 @@ Follow the prompts to log in via your browser. Once authenticated, exit the inte
 /exit
 ```
 
-### Headless VPS (no browser available)
-
-If your server has no display, the browser-based login won't work. Use one of these approaches instead:
-
-**Option A — Copy credentials from a machine where you're already logged in (recommended)**
-
-On your local machine (where `claude` is already authenticated), run:
-
-```bash
-scp -r ~/.claude/ user@your-vps-ip:~/.claude/
-```
-
-Claude Code stores its auth tokens in `~/.claude/` — copying this folder to the VPS is enough.
-
-**Option B — SSH port forwarding**
-
-Connect to the VPS with a port forward before running `claude`:
-
-```bash
-ssh -L 9876:localhost:9876 user@your-vps-ip
-```
-
-Then run `claude` inside that SSH session. When it prints a `localhost` URL for the OAuth flow, open it in your **local** browser — the tunnel makes it reachable. Complete the login, then run `/exit`.
 
 ---
 
@@ -236,6 +213,8 @@ Save and exit: `Ctrl+O`, `Enter`, `Ctrl+X`.
 ## Step 9 — Run the Server
 
 **Option A — Docker (recommended):**
+
+First, make sure you are logged in to Claude Code (run `claude` and follow the login steps if you haven't already). Then:
 
 ```bash
 docker compose up
