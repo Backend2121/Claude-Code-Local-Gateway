@@ -8,4 +8,6 @@ services:
     volumes:
       # Persist the audit log outside the container
       - ./logs:/app/logs
+      # Mount host Claude credentials so the CLI is authenticated
+      - ~/.claude:/root/.claude:ro
     restart: unless-stopped
