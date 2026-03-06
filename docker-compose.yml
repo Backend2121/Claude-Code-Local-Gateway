@@ -9,6 +9,6 @@ services:
       # Persist the audit log outside the container
       - ./logs:/app/logs
       # Mount host Claude credentials so the CLI is authenticated
-      - ~/.claude:/root/.claude:ro
-      - ~/.claude.json:/root/.claude.json:ro
+      - ~/.claude:/home/CCLG/.claude:ro
+      - ~/.claude.json:/home/CCLG/.claude.json:ro
     restart: unless-stopped
