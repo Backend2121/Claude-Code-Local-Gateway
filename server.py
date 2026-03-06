@@ -141,6 +141,7 @@ def health():
 @limiter.limit("30 per minute")
 def execute():
     if RESTRICTED_MODE:
+        _audit.info("EXECUTE ip=%s blocked=restricted_mode", request.remote_addr)
         return _error(403, "disabled", "Shell execution is disabled in restricted mode. Use /generate-claude instead.")
 
     if not _check_auth():
@@ -224,12 +225,16 @@ def generate_claude():
             errors="replace",
         )
     except subprocess.TimeoutExpired:
+        _audit.info("GENERATE ip=%s exit=timeout model=%s prompt_len=%d", request.remote_addr, model, len(user_prompt))
         return _error(408, "timeout", f"Claude timed out after {COMMAND_TIMEOUT} seconds")
     except Exception as exc:
+        _audit.info("GENERATE ip=%s exit=error model=%s error=%r", request.remote_addr, model, str(exc))
         app.logger.error("generate-claude subprocess failed: %s", exc)
         return _error(500, "internal_error", f"Failed to launch Claude: {exc}")
 
     duration_ms = int((time.monotonic() - start) * 1000)
+    _audit.info("GENERATE ip=%s exit=%d duration=%dms model=%s prompt_len=%d",
+                request.remote_addr, result.returncode, duration_ms, model, len(user_prompt))
     print(f"[generate-claude] exit={result.returncode} duration={duration_ms}ms")
 
     if result.returncode != 0:

@@ -20,6 +20,14 @@ A lightweight, self-hosted HTTP server that gives you remote access to a **Local
 
 ---
 
+## Installation Guides
+
+- [Windows](guides/windows.md)
+- [Linux](guides/linux.md)
+- [Raspberry Pi 4/5](guides/raspberry-pi.md)
+
+---
+
 ## Quickstart
 
 ### Option A — Docker (recommended for new users)
