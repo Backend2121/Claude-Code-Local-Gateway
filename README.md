@@ -1,6 +1,6 @@
 # Claude Gateway
 
-A lightweight, self-hosted HTTP server that gives you remote access to a **Local instance if Claude Code (PRO/MAX)** and (optionally) a shell over a simple REST API — with a built-in web UI.
+A lightweight, self-hosted HTTP server that gives you remote access to a **Local instance of Claude Code (PRO/MAX)** and (optionally) a shell over a simple REST API — with a built-in web UI.
 
 ```
 Browser / HTTP client
