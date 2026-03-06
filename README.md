@@ -1,16 +1,8 @@
-# Claude Gateway
+# Claude Code Local Gateway (CCLG)
+
+Transform your Claude Code PRO/MAX account into the API plan
 
 A lightweight, self-hosted HTTP server that gives you remote access to a **Local instance of Claude Code (PRO/MAX)** and (optionally) a shell over a simple REST API — with a built-in web UI.
-
-```
-Browser / HTTP client
-        |
-        v
-  Flask Server (this repo)
-        |
-        +-- /generate-claude --> claude code CLI --> Anthropic API
-        +-- /execute         --> local shell  (optional, see security)
-```
 
 > **Security notice:** If you enable shell execution (`RESTRICTED_MODE=false`), read [SECURITY_WARNING.md](SECURITY_WARNING.md) before exposing this server to any network.
 
@@ -109,7 +101,7 @@ Rate limit: 10 requests/minute per IP.
 {
   "success": true,
   "result": "Recursion is a function calling itself...",
-  "cost_usd": 0.0002, // Using a PRO/MAX account this is always 0!
+  "cost_usd": 0.0002, // While using a PRO/MAX account this is always 0!
   "duration_ms": 1240
 }
 ```

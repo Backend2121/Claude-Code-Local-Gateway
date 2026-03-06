@@ -278,7 +278,7 @@ def main():
     mode_label   = "RESTRICTED (shell disabled)" if RESTRICTED_MODE else "UNRESTRICTED (shell enabled)"
     auth_label   = "ENABLED" if API_KEY else "DISABLED — set API_KEY before exposing to network!"
     print(f"""
-Claude Gateway Server
+Claude Code Local Gateway (CCLG)
   Listening:  http://{args.host}:{args.port}
   Web UI:     http://localhost:{args.port}/
   Auth:       {auth_label}
