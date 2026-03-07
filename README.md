@@ -8,6 +8,14 @@ A lightweight, self-hosted HTTP server that gives you remote access to a **Local
 
 ---
 
+## Support
+
+If you find this project useful, consider supporting it on Patreon:
+
+[![Patreon](https://img.shields.io/badge/Patreon-Support-orange?logo=patreon)](https://patreon.com/AlessandroPerini_Backend?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink)
+
+---
+
 ## Features
 
 - **Web UI** at `/` — no client needed, works in any browser
@@ -213,14 +221,6 @@ PRs and issues welcome. Keep changes focused and minimal.
 2. Create a branch (`git checkout -b feature/my-feature`)
 3. Commit your changes
 4. Open a pull request
-
----
-
-## Support
-
-If you find this project useful, consider supporting it on Patreon:
-
-[![Patreon](https://img.shields.io/badge/Patreon-Support-orange?logo=patreon)](https://patreon.com/AlessandroPerini_Backend?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink)
 
 ---
 
