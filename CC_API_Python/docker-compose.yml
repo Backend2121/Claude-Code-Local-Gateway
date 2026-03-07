@@ -1,0 +1,14 @@
+services:
+  gateway:
+    build: .
+    ports:
+      - "8642:8642"
+    env_file:
+      - .env
+    volumes:
+      # Persist the audit log outside the container
+      - ./logs:/app/logs
+      # Mount host Claude credentials so the CLI is authenticated
+      - ~/.claude:/home/CCLG/.claude:ro
+      - ~/.claude.json:/home/CCLG/.claude.json:ro
+    restart: unless-stopped
