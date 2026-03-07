@@ -216,6 +216,14 @@ PRs and issues welcome. Keep changes focused and minimal.
 
 ---
 
+## Support
+
+If you find this project useful, consider supporting it on Patreon:
+
+[![Patreon](https://img.shields.io/badge/Patreon-Support-orange?logo=patreon)](https://patreon.com/AlessandroPerini_Backend?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink)
+
+---
+
 ## License
 
 MIT
