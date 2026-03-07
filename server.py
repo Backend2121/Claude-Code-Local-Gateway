@@ -32,7 +32,7 @@ import subprocess
 import sys
 import time
 
-# Force UTF-8 on Windows terminals so emoji in Claude responses don't mojibake
+# Emoji fix
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
