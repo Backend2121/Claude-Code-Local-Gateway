@@ -66,6 +66,22 @@ Additional precautions:
 
 ---
 
+## The `--dangerously-skip-permissions` flag
+
+Claude Code supports a `--dangerously-skip-permissions` flag that disables all permission prompts, allowing the agent to execute tool calls (file writes, shell commands, etc.) without any user confirmation.
+
+**Never use this flag in combination with this server unless you fully understand the consequences.**
+
+When Claude Code runs with `--dangerously-skip-permissions` and this server's `/execute` endpoint is reachable, a compromised or misbehaving model could issue arbitrary shell commands with no human in the loop. This removes the last layer of defense between the LLM and your system.
+
+Safe uses of the flag are limited to:
+- Isolated, throwaway environments (containers, VMs) with no sensitive data or credentials (like docker)
+- Automated CI pipelines where the full prompt/tool chain is under your control
+
+If you are running Claude Code as part of an automated workflow that calls this server, **do not use `--dangerously-skip-permissions`** unless the server is in `RESTRICTED_MODE=true` and the execution endpoint is disabled.
+
+---
+
 ## Reporting security issues
 
 If you find a vulnerability, please open a private GitHub Security Advisory rather than a public issue.
