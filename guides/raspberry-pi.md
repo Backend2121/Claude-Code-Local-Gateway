@@ -148,7 +148,6 @@ docker compose version
 
 ```bash
 git clone https://github.com/Backend2121/Claude-Code-Local-Gateway.git
-cd CCLG
 ```
 
 > All remaining steps assume you are inside this folder in your terminal.
