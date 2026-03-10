@@ -41,7 +41,7 @@ If you find this project useful, consider supporting it on Patreon:
 ### Option A — Docker (recommended for new users)
 
 ```bash
-git clone https://github.com/Backend2121/Claude-Code-API
+git clone https://github.com/Backend2121/Claude-Code-Local-Gateway
 cd Claude-Code-API
 
 cp .env.example .env
@@ -56,7 +56,7 @@ Open `http://localhost:8642` in your browser.
 ### Option B — Python (local / development)
 
 ```bash
-git clone https://github.com/Backend2121/Claude-Code-API
+git clone https://github.com/Backend2121/Claude-Code-Local-Gateway
 cd Claude-Code-API
 
 python -m venv .venv
