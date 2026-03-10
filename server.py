@@ -240,8 +240,8 @@ def generate_claude():
     print(f"[generate-claude] exit={result.returncode} duration={duration_ms}ms")
 
     if result.returncode != 0:
-        stderr_snippet = (result.stderr or "")[:500]
-        return jsonify({"success": False, "error": f"Claude exited {result.returncode}: {stderr_snippet}"}), 200
+        error_detail = ((result.stderr or "").strip() or (result.stdout or "").strip())[:500] or "(no output)"
+        return jsonify({"success": False, "error": f"Claude exited {result.returncode}: {error_detail}"}), 200
 
     try:
         parsed = json.loads(result.stdout)

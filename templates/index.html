@@ -262,7 +262,9 @@
         meta.textContent = `cost: $${(d.cost_usd || 0).toFixed(4)} · ${d.duration_ms}ms`;
         out.appendChild(meta);
       } else {
-        out.innerHTML = `<span style="color:var(--red)">${d.error || d.message || 'Unknown error'}</span>`;
+        const msg = (d.error || d.message || 'Unknown error')
+          .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        out.innerHTML = `<span style="color:var(--red);white-space:pre-wrap">${msg}</span>`;
       }
     } catch (e) {
       out.innerHTML = `<span style="color:var(--red)">Request failed: ${e.message}</span>`;
