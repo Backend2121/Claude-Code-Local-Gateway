@@ -129,7 +129,7 @@
     </div>
     <div class="input-group">
       <label>System Prompt (optional)</label>
-      <textarea id="claude-system" rows="2" placeholder="Optional system context..."></textarea>
+      <textarea id="system-prompt" rows="2" placeholder="Optional system context..."></textarea>
     </div>
     <div class="row">
       <div class="input-group">
@@ -250,7 +250,7 @@
         headers: authHeaders(),
         body: JSON.stringify({
           user_prompt:   prompt,
-          system_prompt: document.getElementById('claude-system').value.trim(),
+          system_prompt: document.getElementById('system-prompt').value.trim(),
           model:         document.getElementById('claude-model').value,
         })
       });

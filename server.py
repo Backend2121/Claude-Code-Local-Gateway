@@ -207,6 +207,8 @@ def generate_claude():
     user_prompt   = data["user_prompt"]
     system_prompt = data.get("system_prompt", "")
     model         = data.get("model", "claude-haiku-4-5-20251001")
+    print("User prompt: " + user_prompt)
+    print("System prompt: " + system_prompt)
 
     claude_bin = shutil.which("claude") or "claude"
     cmd = [claude_bin, "-p", user_prompt, "--model", model,
